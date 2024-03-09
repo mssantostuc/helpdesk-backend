@@ -5,8 +5,6 @@ import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mssantos.helpdesk.domain.Chamado;
-import com.mssantos.helpdesk.domain.Cliente;
-import com.mssantos.helpdesk.domain.Tecnico;
 
 
 
