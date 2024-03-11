@@ -1,81 +1,70 @@
 package com.mssantos.helpdesk.config;
 
-import com.mssantos.helpdesk.security.JWTAuthenticationFilter;
-import com.mssantos.helpdesk.security.JWTAuthorizationFilter;
-import com.mssantos.helpdesk.security.JWTUtil;
-
-import java.util.List;
+import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-@Configuration
+import com.mssantos.helpdesk.security.JWTAuthenticationFilter;
+import com.mssantos.helpdesk.security.JWTAuthorizationFilter;
+import com.mssantos.helpdesk.security.JWTUtil;
+
 @EnableWebSecurity
-@EnableMethodSecurity
-public class SecurityConfig {
- 
-    private final JWTUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
- 
-    @Autowired
-    public SecurityConfig(JWTUtil jwtUtil, UserDetailsService userDetailsService) {
-        this.jwtUtil = jwtUtil;
-        this.userDetailsService = userDetailsService;
-    }
- 
-    @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder());
-        AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
-        http
-                .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authz -> authz
-                        .anyRequest().authenticated()
-                )
-                .addFilter(new JWTAuthenticationFilter(authenticationManager, jwtUtil))
-                .addFilter(new JWTAuthorizationFilter(authenticationManager, jwtUtil, userDetailsService))
-                .authenticationManager(authenticationManager)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        return http.build();
-    }
- 
-    @Bean
-    WebSecurityCustomizer webSecurityCustomizer() {
-        return web -> web.ignoring().requestMatchers(
-                new AntPathRequestMatcher("/h2-console/**")
-        );
-    }
- 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration corsConfiguration = new CorsConfiguration().applyPermitDefaultValues();
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfiguration);
-        return source;
-    }
- 
-    @Bean
-    BCryptPasswordEncoder bCryptPasswordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+	private static final String[] PUBLIC_MATCHERS = { "/h2-console/**" };
+
+	@Autowired
+	private Environment env;
+	@Autowired
+	private JWTUtil jwtUtil;
+	@Autowired
+	private UserDetailsService userDetailsService;
+
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		if (Arrays.asList(env.getActiveProfiles()).contains("test")) {
+			http.headers().frameOptions().disable();
+		}
+
+		http.cors().and().csrf().disable();
+		http.addFilter(new JWTAuthenticationFilter(authenticationManager(), jwtUtil));
+		http.addFilter(new JWTAuthorizationFilter(authenticationManager(), jwtUtil, userDetailsService));
+		http.authorizeRequests().antMatchers(PUBLIC_MATCHERS).permitAll().anyRequest().authenticated();
+
+		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+	}
+
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder());
+	}
+
+	@Bean
+	CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration().applyPermitDefaultValues();
+		configuration.setAllowedMethods(Arrays.asList("POST", "GET", "PUT", "DELETE", "OPTIONS"));
+		final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
+	}
+
+	@Bean
+	public BCryptPasswordEncoder bCryptPasswordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
 }

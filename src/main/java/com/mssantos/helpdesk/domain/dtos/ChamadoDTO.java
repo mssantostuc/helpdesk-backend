@@ -3,10 +3,10 @@ package com.mssantos.helpdesk.domain.dtos;
 import java.io.Serializable;
 import java.time.LocalDate;
 
+import javax.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mssantos.helpdesk.domain.Chamado;
-
-import jakarta.validation.constraints.NotNull;
 
 
 

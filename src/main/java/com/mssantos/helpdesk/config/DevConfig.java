@@ -19,7 +19,7 @@ public class DevConfig {
 	private String value; 
 	
 	@Bean
-	public boolean instanciaDB() {
+	boolean instanciaDB() {
 		
 		if(value.equals("create")) {
 			this.dbService.instaciaDB();
