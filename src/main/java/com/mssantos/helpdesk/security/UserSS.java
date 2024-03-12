@@ -9,8 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.mssantos.helpdesk.domain.enums.Perfil;
 
-public class UserSS implements UserDetails{
-
+public class UserSS implements UserDetails {
 	private static final long serialVersionUID = 1L;
 	
 	private Integer id;
@@ -29,7 +28,7 @@ public class UserSS implements UserDetails{
 	public Integer getId() {
 		return id;
 	}
-	
+
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return authorities;
