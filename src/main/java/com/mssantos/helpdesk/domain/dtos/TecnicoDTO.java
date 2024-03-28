@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.validator.constraints.br.CPF;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mssantos.helpdesk.domain.Tecnico;
 import com.mssantos.helpdesk.domain.enums.Perfil;
