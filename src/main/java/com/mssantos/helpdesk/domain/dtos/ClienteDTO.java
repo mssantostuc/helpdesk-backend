@@ -21,6 +21,7 @@ public class ClienteDTO implements Serializable{
 	protected String nome;
 	@NotNull(message = "O campo CPF é requerido")
 	protected String cpf;
+	@CPF
 	@NotNull(message = "O campo EMAIL é requerido")
 	protected String email;
 	@NotNull(message = "O campo SENHA é requerido")
